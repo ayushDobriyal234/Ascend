@@ -136,7 +136,7 @@ private fun Gate(pkg: String, label: String, highRisk: Boolean, onLeave: () -> U
     )
 
     Column(
-        Modifier.fillMaxSize().background(Palette.Cream).systemBarsPadding().imePadding()
+        Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.White).systemBarsPadding().imePadding()
             .verticalScroll(rememberScrollState()).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {

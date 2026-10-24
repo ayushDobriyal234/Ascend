@@ -62,11 +62,11 @@ private val Light = lightColorScheme(
     secondary = Palette.Sun, onSecondary = Palette.Forest900,
     secondaryContainer = Palette.SunSoft, onSecondaryContainer = Palette.Forest900,
     tertiary = Palette.Forest500,
-    // background = the icon's off-white (sky/trail cream); cards sit a shade lighter on top
-    background = Palette.Cream, onBackground = Palette.Ink,
-    surface = Palette.Cream, onSurface = Palette.Ink,
-    surfaceVariant = Palette.Paper, onSurfaceVariant = Color(0xFF4A5A50),
-    surfaceContainer = Palette.Paper, surfaceContainerHigh = Palette.Sand,
+    // plain white surfaces; cards are separated by their warm outline
+    background = Color.White, onBackground = Palette.Ink,
+    surface = Color.White, onSurface = Palette.Ink,
+    surfaceVariant = Color.White, onSurfaceVariant = Color(0xFF4A5A50),
+    surfaceContainer = Color.White, surfaceContainerHigh = Palette.Sand,
     outline = Color(0xFFD9C79A), outlineVariant = Color(0xFFEADBB2),
     error = Palette.Ember,
 )

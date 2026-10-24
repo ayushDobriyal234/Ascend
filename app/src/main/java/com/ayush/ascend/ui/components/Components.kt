@@ -132,6 +132,7 @@ fun Chip(text: String, color: Color = MaterialTheme.colorScheme.secondaryContain
 fun StatTile(value: String, label: String, modifier: Modifier = Modifier, leading: (@Composable () -> Unit)? = null) {
     Column(
         modifier.clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surfaceContainer)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp))
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {

@@ -77,26 +77,26 @@ fun ShieldScreen(nav: NavController) {
     fun FeatureRow(f: Feature, sub: String) = ToggleRow(f.title, sub, s.on(f), pendingFor(f)) { toggle(f, it) }
 
     Column(
-        Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState()).padding(18.dp, 12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp, 16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Text("Shield", style = MaterialTheme.typography.headlineMedium)
         Text("Turning anything ON is instant. Turning it OFF waits 24 hours — enough for the urge to pass.",
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
         SectionLabel("Friction")
-        AscendCard { Column {
+        AscendCard { Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             FeatureRow(Feature.GATE, "Asks “why?” before gated apps open. Each reopen within an hour costs more.")
-            HorizontalDivider()
+            HorizontalDivider(Modifier.padding(vertical = 6.dp))
             FeatureRow(Feature.PREDICTOR, "Learns when you usually slip and adds friction before it happens.")
         } }
 
         SectionLabel("Reels & Shorts")
-        AscendCard { Column {
+        AscendCard { Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             FeatureRow(Feature.REELS_IG, "Reels gone, DMs and stories stay.")
-            HorizontalDivider()
+            HorizontalDivider(Modifier.padding(vertical = 6.dp))
             FeatureRow(Feature.REELS_YT, "Shorts gone, search and normal videos stay.")
-            HorizontalDivider()
+            HorizontalDivider(Modifier.padding(vertical = 6.dp))
             FeatureRow(Feature.REELS_FB, "Reels gone, the rest of Facebook stays.")
             var url by remember(s.rulesUrl) { mutableStateOf(s.rulesUrl) }
             OutlinedTextField(url, { url = it }, Modifier.fillMaxWidth().padding(top = 8.dp), singleLine = true,
@@ -109,7 +109,7 @@ fun ShieldScreen(nav: NavController) {
         } }
 
         SectionLabel("Grayscale")
-        AscendCard { Column {
+        AscendCard { Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             FeatureRow(Feature.GRAYSCALE, "Black & white after ${formatMinutes(s.grayAfterMin)} of screen time, and from ${s.bedtimeHour}:00 to ${s.wakeHour}:00.")
             Stepper("After", formatMinutes(s.grayAfterMin)) { d ->
                 scope.launch { g.prefs.update { p, k -> p[k.grayAfter] = (s.grayAfterMin + d * 15).coerceIn(15, 600) } }
@@ -123,27 +123,27 @@ fun ShieldScreen(nav: NavController) {
         } }
 
         SectionLabel("Network & notifications")
-        AscendCard { Column {
+        AscendCard { Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             FeatureRow(Feature.DNS, "Blocks your chosen sites in every app and browser, on-device.")
             TextButton({ nav.navigate("firewall") }) { Text("Manage blocked sites →") }
-            HorizontalDivider()
+            HorizontalDivider(Modifier.padding(vertical = 6.dp))
             FeatureRow(Feature.ADULT, "Automatically blocks adult sites in every app and browser (Cloudflare family filter). Turns on the DNS firewall.")
-            HorizontalDivider()
+            HorizontalDivider(Modifier.padding(vertical = 6.dp))
             FeatureRow(Feature.BATCH, "Holds notifications from chosen apps and delivers them at ${s.batchSlots.joinToString(", ")}.")
             TextButton({ nav.navigate("inbox") }) { Text("Digest & apps →") }
         } }
 
         SectionLabel("People & home screen")
-        AscendCard { Column {
+        AscendCard { Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("Accountability partner", style = MaterialTheme.typography.titleMedium)
             Text("A friend gets a Telegram ping when you change a limit or pay to unlock.", style = MaterialTheme.typography.bodySmall)
             TextButton({ nav.navigate("partner") }) { Text("Set up partner & stakes →") }
-            HorizontalDivider()
+            HorizontalDivider(Modifier.padding(vertical = 6.dp))
             Text("Minimal launcher", style = MaterialTheme.typography.titleMedium)
             Text("Text-only home screen; distracting apps only appear when you type their full name.", style = MaterialTheme.typography.bodySmall)
             OutlinedButton({ ctx.startActivity(Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) },
                 Modifier.padding(top = 6.dp)) { Text("Choose “Ascend Home” as home app") }
-            HorizontalDivider()
+            HorizontalDivider(Modifier.padding(vertical = 6.dp))
             Text("Live wallpaper", style = MaterialTheme.typography.titleMedium)
             Text("Your climb on the home screen. The sky turns dusk as you near your goal, night once you pass it.",
                 style = MaterialTheme.typography.bodySmall)
