@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Ascend</string>
+    <string name="accessibility_description">Ascend watches which app is on screen so it can enforce your daily limits, show the intent gate, and block Reels/Shorts. Nothing leaves your phone.</string>
+    <string name="wallpaper_description">Your climb, live: the climber moves with your streak and the sky darkens as screen time adds up.</string>
+</resources>

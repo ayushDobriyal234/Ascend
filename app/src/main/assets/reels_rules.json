@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "note": "View IDs drift with app updates. Inspect with `adb shell uiautomator dump` or Android Studio Layout Inspector and update here (or host this file and set its URL in the app).",
+  "apps": {
+    "com.instagram.android": {
+      "feature": "REELS_IG",
+      "viewIds": [
+        "com.instagram.android:id/clips_viewer_view_pager",
+        "com.instagram.android:id/clips_viewer_container",
+        "com.instagram.android:id/clips_video_container"
+      ],
+      "selectedDescs": ["reels"],
+      "activityHints": ["ClipsViewerActivity"]
+    },
+    "com.google.android.youtube": {
+      "feature": "REELS_YT",
+      "viewIds": [
+        "com.google.android.youtube:id/reel_recycler",
+        "com.google.android.youtube:id/reel_player_page_container",
+        "com.google.android.youtube:id/reel_watch_player"
+      ],
+      "selectedDescs": ["shorts"],
+      "activityHints": ["ReelWatchActivity", "ShortsActivity"]
+    },
+    "com.facebook.katana": {
+      "feature": "REELS_FB",
+      "viewIds": [],
+      "selectedDescs": ["reels"],
+      "activityHints": ["ReelsActivity"]
+    }
+  }
+}

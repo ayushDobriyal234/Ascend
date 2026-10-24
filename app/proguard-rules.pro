@@ -1,0 +1,2 @@
+-keep class com.ayush.ascend.service.** { *; }
+-keep class com.ayush.ascend.widget.** { *; }
