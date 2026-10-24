@@ -72,6 +72,7 @@ class GuardService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         running = true
+        instance = this
         overlay = OverlayHost(this)
         imePkg = Settings.Secure.getString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD)
             ?.let { ComponentName.unflattenFromString(it)?.packageName }
@@ -85,6 +86,7 @@ class GuardService : AccessibilityService() {
 
     override fun onDestroy() {
         running = false
+        instance = null
         runCatching { unregisterReceiver(screenReceiver) }
         if (::overlay.isInitialized) overlay.hide()
         scope.cancel()
@@ -278,6 +280,10 @@ class GuardService : AccessibilityService() {
     companion object {
         @Volatile var running = false
             private set
+        @Volatile private var instance: GuardService? = null
+
+        /** Double-tap-to-lock for Ascend Home; false if the accessibility service isn't on. */
+        fun lockScreen(): Boolean = instance?.performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN) ?: false
 
         fun isEnabled(ctx: Context): Boolean {
             val list = Settings.Secure.getString(ctx.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: return false
