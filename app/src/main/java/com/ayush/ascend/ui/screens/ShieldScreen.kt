@@ -72,6 +72,7 @@ fun ShieldScreen(nav: NavController) {
         }
         g.policy.setFeature(f, on).message()?.let { snackbar.showSnackbar(it) }
         if (f == Feature.DNS && !on) DnsVpnService.stop(ctx)
+        if (f == Feature.GRAYSCALE && !on) Grayscale.enforce(ctx, g.prefs.current(), 0)  // colour back now, not next minute
     }
 
     @Composable
@@ -82,7 +83,7 @@ fun ShieldScreen(nav: NavController) {
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Text("Shield", style = MaterialTheme.typography.headlineMedium)
-        Text("Turning anything ON is instant. Turning it OFF waits 24 hours — enough for the urge to pass (except the DNS firewall and 18+ filter).",
+        Text("Turning anything ON is instant. Turning it OFF waits 24 hours — enough for the urge to pass (except grayscale, the DNS firewall and 18+ filter).",
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
         SectionLabel("Friction")
@@ -111,7 +112,7 @@ fun ShieldScreen(nav: NavController) {
 
         SectionLabel("Grayscale")
         AscendCard { Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            FeatureRow(Feature.GRAYSCALE, "Black & white after ${formatMinutes(s.grayAfterMin)} of screen time, and from ${s.bedtimeHour}:00 to ${s.wakeHour}:00.")
+            FeatureRow(Feature.GRAYSCALE, "Black & white after ${formatMinutes(s.grayAfterMin)} of screen time, and from ${s.bedtimeHour}:00 to ${s.wakeHour}:00. Turns off instantly.")
             Stepper("After", formatMinutes(s.grayAfterMin)) { d ->
                 scope.launch { g.prefs.update { p, k -> p[k.grayAfter] = (s.grayAfterMin + d * 15).coerceIn(15, 600) } }
             }

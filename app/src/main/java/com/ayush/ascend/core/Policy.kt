@@ -85,9 +85,9 @@ class Policy(private val g: Graph) {
     suspend fun setFeature(f: Feature, on: Boolean): EditResult {
         if (on) { g.prefs.setFeatureNow(f, true); cancel(PendingKinds.FEATURE_OFF, f.key); return EditResult.Applied }
         if (!g.prefs.current().on(f)) return EditResult.Applied
-        // the firewall can break connectivity, so it (and 18+, which rides on it) switches off instantly
+        // these can get in the way (firewall breaking connectivity, grayscale), so they switch off instantly
         if (f in INSTANT_OFF) {
-            val off = if (f == Feature.DNS) INSTANT_OFF else listOf(f)
+            val off = if (f == Feature.DNS) listOf(Feature.DNS, Feature.ADULT) else listOf(f)  // 18+ rides on the firewall
             off.forEach { g.prefs.setFeatureNow(it, false); cancel(PendingKinds.FEATURE_OFF, it.key) }
             return EditResult.Applied
         }
@@ -139,4 +139,4 @@ class Policy(private val g: Graph) {
     }
 }
 
-private val INSTANT_OFF = listOf(Feature.DNS, Feature.ADULT)
+private val INSTANT_OFF = listOf(Feature.DNS, Feature.ADULT, Feature.GRAYSCALE)
