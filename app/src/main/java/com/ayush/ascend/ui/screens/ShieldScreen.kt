@@ -71,6 +71,7 @@ fun ShieldScreen(nav: NavController) {
             DnsVpnService.start(ctx)
         }
         g.policy.setFeature(f, on).message()?.let { snackbar.showSnackbar(it) }
+        if (f == Feature.DNS && !on) DnsVpnService.stop(ctx)
     }
 
     @Composable
@@ -81,7 +82,7 @@ fun ShieldScreen(nav: NavController) {
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Text("Shield", style = MaterialTheme.typography.headlineMedium)
-        Text("Turning anything ON is instant. Turning it OFF waits 24 hours — enough for the urge to pass.",
+        Text("Turning anything ON is instant. Turning it OFF waits 24 hours — enough for the urge to pass (except the DNS firewall and 18+ filter).",
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
         SectionLabel("Friction")
@@ -124,10 +125,10 @@ fun ShieldScreen(nav: NavController) {
 
         SectionLabel("Network & notifications")
         AscendCard { Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            FeatureRow(Feature.DNS, "Blocks your chosen sites in every app and browser, on-device.")
+            FeatureRow(Feature.DNS, "Blocks your chosen sites in every app and browser, on-device. Turns off instantly if it causes problems.")
             TextButton({ nav.navigate("firewall") }) { Text("Manage blocked sites →") }
             HorizontalDivider(Modifier.padding(vertical = 6.dp))
-            FeatureRow(Feature.ADULT, "Automatically blocks adult sites in every app and browser (Cloudflare family filter). Turns on the DNS firewall.")
+            FeatureRow(Feature.ADULT, "Automatically blocks adult sites in every app and browser (Cloudflare family filter). Turns on the DNS firewall. Turns off instantly.")
             HorizontalDivider(Modifier.padding(vertical = 6.dp))
             FeatureRow(Feature.BATCH, "Holds notifications from chosen apps and delivers them at ${s.batchSlots.joinToString(", ")}.")
             TextButton({ nav.navigate("inbox") }) { Text("Digest & apps →") }
