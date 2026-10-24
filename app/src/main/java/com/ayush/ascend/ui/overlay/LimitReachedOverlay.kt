@@ -42,7 +42,7 @@ fun LimitReachedOverlay(
     onConfirmPaid: () -> Unit,
 ) = AscendTheme {
     Column(
-        Modifier.fillMaxSize().background(Palette.Cream).padding(28.dp),
+        Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.White).padding(28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
