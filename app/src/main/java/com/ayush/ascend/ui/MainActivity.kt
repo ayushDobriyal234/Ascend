@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import android.graphics.Color
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Insights
@@ -50,6 +51,7 @@ import com.ayush.ascend.ui.screens.InsightsScreen
 import com.ayush.ascend.ui.screens.LimitsScreen
 import com.ayush.ascend.ui.screens.PartnerScreen
 import com.ayush.ascend.ui.screens.ReportScreen
+import com.ayush.ascend.ui.screens.SettingsScreen
 import com.ayush.ascend.ui.screens.SetupScreen
 import com.ayush.ascend.ui.screens.ShieldScreen
 import com.ayush.ascend.ui.screens.DailyChestPrompt
@@ -68,9 +70,16 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge(SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT), SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT))
         startRoute.value = intent.getStringExtra(EXTRA_ROUTE)
-        setContent { AscendTheme { AscendRoot(startRoute.value, resumes.intValue) { startRoute.value = null } } }
+        setContent {
+            val mode by graph.prefs.settings.collectAsStateWithLifecycle()
+            val dark = when (mode.themeMode) { "dark" -> true; "light" -> false; else -> isSystemInDarkTheme() }
+            LaunchedEffect(dark) {
+                val bars = if (dark) SystemBarStyle.dark(Color.TRANSPARENT) else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+                enableEdgeToEdge(bars, bars)
+            }
+            AscendTheme(dark) { AscendRoot(startRoute.value, resumes.intValue) { startRoute.value = null } }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -125,6 +134,7 @@ private fun AscendRoot(deepLink: String?, resumes: Int, consumed: () -> Unit) {
                     ReportScreen(nav, it.arguments?.getString("week"))
                 }
                 composable("setup") { SetupScreen(nav) }
+                composable("settings") { SettingsScreen(nav) }
                 composable("inbox") { InboxScreen(nav) }
                 composable("firewall") { FirewallScreen(nav) }
                 composable("partner") { PartnerScreen(nav) }

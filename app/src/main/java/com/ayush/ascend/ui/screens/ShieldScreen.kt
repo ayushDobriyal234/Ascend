@@ -83,12 +83,12 @@ fun ShieldScreen(nav: NavController) {
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Text("Shield", style = MaterialTheme.typography.headlineMedium)
-        Text("Turning anything ON is instant. Turning it OFF waits 24 hours — enough for the urge to pass (except grayscale, the DNS firewall and 18+ filter).",
+        Text("Turning anything ON is instant. Turning it OFF waits 24 hours — enough for the urge to pass (except the intent gate, grayscale, the DNS firewall and 18+ filter).",
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
         SectionLabel("Friction")
         AscendCard { Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            FeatureRow(Feature.GATE, "Asks “why?” before gated apps open. Each reopen within an hour costs more.")
+            FeatureRow(Feature.GATE, "Optional. Asks “why?” before gated apps open. Each reopen within an hour costs more. Turns off instantly.")
             HorizontalDivider(Modifier.padding(vertical = 6.dp))
             FeatureRow(Feature.PREDICTOR, "Learns when you usually slip and adds friction before it happens.")
         } }
@@ -100,6 +100,9 @@ fun ShieldScreen(nav: NavController) {
             FeatureRow(Feature.REELS_YT, "Shorts gone, search and normal videos stay.")
             HorizontalDivider(Modifier.padding(vertical = 6.dp))
             FeatureRow(Feature.REELS_FB, "Reels gone, the rest of Facebook stays.")
+            Stepper("Allowed per day", if (s.reelLimit == 0) "None" else "${s.reelsToday}/${s.reelLimit}") { d ->
+                scope.launch { g.prefs.update { p, k -> p[k.reelLimit] = (s.reelLimit + d * 10).coerceIn(0, 500) } }
+            }
             var url by remember(s.rulesUrl) { mutableStateOf(s.rulesUrl) }
             OutlinedTextField(url, { url = it }, Modifier.fillMaxWidth().padding(top = 8.dp), singleLine = true,
                 label = { Text("Rules JSON URL (optional)") })
@@ -162,7 +165,7 @@ fun ShieldScreen(nav: NavController) {
 }
 
 @Composable
-private fun Stepper(label: String, value: String, onStep: (Int) -> Unit) {
+internal fun Stepper(label: String, value: String, onStep: (Int) -> Unit) {
     androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(label, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
         TextButton({ onStep(-1) }) { Text("−") }
