@@ -145,7 +145,8 @@ private fun Home() {
         Text("${formatMinutes(today)} on screen today · goal ${formatMinutes(s.dailyGoalMin)}",
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(28.dp))
-        LazyColumn(Modifier.weight(1f)) {
+        // while searching, stack results upward from the search box so the best match sits right above it
+        LazyColumn(Modifier.weight(1f), reverseLayout = q.isNotBlank()) {
             items(shown, key = { it.pkg }) { a ->
                 Text(
                     a.label + if (a.pkg in s.pinned && q.isNotBlank()) "  ·" else "",
