@@ -1,6 +1,32 @@
 package com.ayush.ascend.ui.launcher
 
+import android.Manifest
+import android.content.Context
 import android.content.Intent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AcUnit
+import androidx.compose.material.icons.outlined.Cloud
+import androidx.compose.material.icons.outlined.Thunderstorm
+import androidx.compose.material.icons.outlined.WaterDrop
+import androidx.compose.material.icons.outlined.WbSunny
+import androidx.compose.material3.Icon
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.ayush.ascend.R
+import com.ayush.ascend.core.Weather
+import com.ayush.ascend.service.GuardService
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -73,6 +99,17 @@ private fun Home() {
     val rules by g.db.rules().observeAll().collectAsStateWithLifecycle(emptyList())
     val apps by produceState(emptyList<InstalledApp>()) { value = withContext(Dispatchers.Default) { g.usage.launchableApps() } }
     val time by produceState(LocalTime.now()) { while (true) { value = LocalTime.now(); delay(15_000) } }
+    var locGranted by remember { mutableStateOf(Weather.hasPermission(ctx)) }
+    val askLocation = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { locGranted = it }
+    val weather by produceState<Weather.Now?>(null, locGranted) { while (true) { value = Weather.now(ctx) ?: value; delay(30 * 60_000L) } }
+    LaunchedEffect(Unit) {
+        // ask once; after that the weather just stays hidden if you said no
+        val sp = ctx.getSharedPreferences("launcher", Context.MODE_PRIVATE)
+        if (!locGranted && !sp.getBoolean("asked_loc", false)) {
+            sp.edit().putBoolean("asked_loc", true).apply()
+            askLocation.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+    }
     val today by produceState(0) { while (true) { value = withContext(Dispatchers.Default) { g.usage.today().totalMinutes }; delay(60_000) } }
     var q by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
@@ -85,16 +122,31 @@ private fun Home() {
         g.prefs.update { p, k -> p[k.pinned] = if (pkg in s.pinned) s.pinned - pkg else s.pinned + pkg }
     }
 
+    Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.White).pointerInput(Unit) {
+        detectTapGestures(onDoubleTap = {
+            if (!GuardService.lockScreen()) Toast.makeText(ctx, "Turn on Ascend in Accessibility to double-tap lock", Toast.LENGTH_SHORT).show()
+        })
+    }) {
+    Image(painterResource(R.drawable.launcher_bg), null, Modifier.fillMaxWidth().align(Alignment.Center), contentScale = ContentScale.FillWidth, alpha = 0.55f)
     Column(
         Modifier.fillMaxSize().systemBarsPadding().imePadding().padding(28.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Spacer(Modifier.height(32.dp))
-        Text(time.format(DateTimeFormatter.ofPattern("HH:mm")), style = MaterialTheme.typography.displayLarge, fontFamily = Montserrat)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(time.format(DateTimeFormatter.ofPattern("HH:mm")), style = MaterialTheme.typography.displayLarge, fontFamily = Montserrat,
+                modifier = Modifier.weight(1f))
+            weather?.let { w ->
+                Icon(weatherIcon(w.code), null, Modifier.size(18.dp), tint = androidx.compose.ui.graphics.Color.Black)
+                Spacer(Modifier.width(4.dp))
+                Text("${w.tempC}°", style = MaterialTheme.typography.labelLarge, color = androidx.compose.ui.graphics.Color.Black)
+            }
+        }
         Text("${formatMinutes(today)} on screen today · goal ${formatMinutes(s.dailyGoalMin)}",
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(28.dp))
-        LazyColumn(Modifier.weight(1f)) {
+        // while searching, stack results upward from the search box so the best match sits right above it
+        LazyColumn(Modifier.weight(1f), reverseLayout = q.isNotBlank()) {
             items(shown, key = { it.pkg }) { a ->
                 Text(
                     a.label + if (a.pkg in s.pinned && q.isNotBlank()) "  ·" else "",
@@ -114,5 +166,15 @@ private fun Home() {
             Text("Open Ascend")
         }
     }
+    }
     LaunchedEffect(Unit) { g.usage.invalidate() }
+}
+
+/** WMO weather code → a plain outline icon. */
+private fun weatherIcon(code: Int) = when (code) {
+    0, 1 -> Icons.Outlined.WbSunny
+    in 51..67, in 80..82 -> Icons.Outlined.WaterDrop
+    in 71..77, 85, 86 -> Icons.Outlined.AcUnit
+    in 95..99 -> Icons.Outlined.Thunderstorm
+    else -> Icons.Outlined.Cloud
 }

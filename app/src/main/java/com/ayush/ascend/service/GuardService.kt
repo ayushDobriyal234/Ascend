@@ -53,6 +53,8 @@ class GuardService : AccessibilityService() {
     private var lastGateLaunch = 0L
     private var lastReelCheck = 0L
     private var lastReelToast = 0L
+    private var lastReelCount = 0L
+    private var inReels = false
     private val stakeStarted = HashMap<String, Long>()
     private var visitPkg: String? = null
     private var visitStart = 0L
@@ -72,6 +74,7 @@ class GuardService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         running = true
+        instance = this
         overlay = OverlayHost(this)
         imePkg = Settings.Secure.getString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD)
             ?.let { ComponentName.unflattenFromString(it)?.packageName }
@@ -85,6 +88,7 @@ class GuardService : AccessibilityService() {
 
     override fun onDestroy() {
         running = false
+        instance = null
         runCatching { unregisterReceiver(screenReceiver) }
         if (::overlay.isInitialized) overlay.hide()
         scope.cancel()
@@ -104,8 +108,8 @@ class GuardService : AccessibilityService() {
                 onForeground(pkg)
                 checkReels(pkg, e.className?.toString())
             }
-            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED,
-            AccessibilityEvent.TYPE_VIEW_SCROLLED -> if (pkg == fgPkg) checkReels(pkg, null)
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> if (pkg == fgPkg) checkReels(pkg, null)
+            AccessibilityEvent.TYPE_VIEW_SCROLLED -> if (pkg == fgPkg) checkReels(pkg, null, scrolled = true)
         }
     }
 
@@ -237,20 +241,36 @@ class GuardService : AccessibilityService() {
 
     // ---------------- #3 Reels / Shorts ----------------
 
-    private fun checkReels(pkg: String, className: String?) {
+    private fun checkReels(pkg: String, className: String?, scrolled: Boolean = false) {
         val rule = g.reels.rules[pkg] ?: return
-        if (!g.prefs.settings.value.on(rule.feature)) return
+        val s = g.prefs.settings.value
+        if (!s.on(rule.feature)) return
         val now = SystemClock.elapsedRealtime()
         if (className == null && now - lastReelCheck < 350) return
         lastReelCheck = now
 
         val hit = (className != null && rule.activityHints.any { className.contains(it) }) ||
             rootInActiveWindow?.let { root -> matches(root, rule.viewIds, rule.selectedDescs) } == true
-        if (!hit) return
+        if (!hit) { inReels = false; return }
+        if (s.reelsToday < s.reelLimit) {
+            // ponytail: one swipe = one reel (scroll bursts debounced to 800 ms); a fast flicker can miscount by one
+            val entered = !inReels
+            inReels = true
+            if (entered || (scrolled && now - lastReelCount > 800)) {
+                lastReelCount = now
+                scope.launch {
+                    val n = g.prefs.countReel()
+                    if (n == s.reelLimit) toast("That was your last reel for today")
+                    else if (n == s.reelLimit - 5) toast("5 reels left today")
+                }
+            }
+            return
+        }
         performGlobalAction(GLOBAL_ACTION_BACK)
         if (now - lastReelToast > 4_000) {
             lastReelToast = now
-            toast(if (pkg.contains("youtube")) "Shorts blocked — search & videos still work" else "Reels blocked — DMs still work")
+            val why = if (s.reelLimit > 0) "${s.reelLimit} for today used up" else "blocked"
+            toast(if (pkg.contains("youtube")) "Shorts $why — search & videos still work" else "Reels $why — DMs still work")
         }
     }
 
@@ -278,6 +298,10 @@ class GuardService : AccessibilityService() {
     companion object {
         @Volatile var running = false
             private set
+        @Volatile private var instance: GuardService? = null
+
+        /** Double-tap-to-lock for Ascend Home; false if the accessibility service isn't on. */
+        fun lockScreen(): Boolean = instance?.performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN) ?: false
 
         fun isEnabled(ctx: Context): Boolean {
             val list = Settings.Secure.getString(ctx.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: return false

@@ -152,7 +152,7 @@ private fun RuleEditor(pkg: String, label: String, existing: AppRule?, now: Long
     val lockedMax = if (days > 0) existing?.limitMinutes else null
     var hasLimit by remember { mutableStateOf(existing?.limitMinutes != null || existing == null) }
     var value by remember { mutableFloatStateOf((existing?.limitMinutes ?: 30).toFloat()) }
-    var gated by remember { mutableStateOf(existing?.gated ?: true) }
+    var gated by remember { mutableStateOf(existing?.gated ?: false) }
     val max = (lockedMax ?: MAX_LIMIT).toFloat()
     LaunchedEffect(max) { if (value > max) value = max }
 
@@ -178,7 +178,7 @@ private fun RuleEditor(pkg: String, label: String, existing: AppRule?, now: Long
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text("Intent gate", style = MaterialTheme.typography.titleMedium)
-                        Text("Ask why before every open. Turning off waits 24 h.", style = MaterialTheme.typography.bodySmall)
+                        Text("Optional: ask why before every open.", style = MaterialTheme.typography.bodySmall)
                     }
                     Switch(gated, { gated = it })
                 }

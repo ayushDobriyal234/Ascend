@@ -105,7 +105,7 @@ fun HomeScreen(nav: NavController) {
                 Spacer(Modifier.width(10.dp))
                 Text("Ascend", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
                 TextButton({ nav.navigate("shop") }) { CoinAmount("${settings.acPoints}", color = MaterialTheme.colorScheme.primary, coin = 22.dp) }
-                IconButton({ nav.navigate("setup") }) { Icon(Icons.Outlined.Settings, "Setup") }
+                IconButton({ nav.navigate("settings") }) { Icon(Icons.Outlined.Settings, "Settings") }
             }
         }
         if (!guardOn || !g.usage.hasAccess()) item {

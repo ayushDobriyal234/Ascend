@@ -28,7 +28,7 @@ sealed interface EditResult {
  * STRICTER any time, but never looser or removed. After 45 days (verified with network time)
  * you can change it, which starts a fresh 45-day lock.
  *
- * Everything else that loosens protection (gate off, feature off, unblock domain…) waits 24 h.
+ * Everything else that loosens protection (feature off, unblock domain…) waits 24 h.
  */
 class Policy(private val g: Graph) {
 
@@ -78,13 +78,21 @@ class Policy(private val g: Graph) {
 
     suspend fun setGate(pkg: String, on: Boolean): EditResult {
         val rule = db.rules().get(pkg) ?: return EditResult.Invalid("Unknown app")
-        if (on) { db.rules().upsert(rule.copy(gated = true)); cancel(PendingKinds.GATE_OFF, pkg); return EditResult.Applied }
-        return schedule(PendingKinds.GATE_OFF, pkg)
+        cancel(PendingKinds.GATE_OFF, pkg)
+        // the gate is optional: it switches off instantly, like turning it on
+        if (on || rule.limitMinutes != null) db.rules().upsert(rule.copy(gated = on)) else db.rules().delete(pkg)
+        return EditResult.Applied
     }
 
     suspend fun setFeature(f: Feature, on: Boolean): EditResult {
         if (on) { g.prefs.setFeatureNow(f, true); cancel(PendingKinds.FEATURE_OFF, f.key); return EditResult.Applied }
         if (!g.prefs.current().on(f)) return EditResult.Applied
+        // these can get in the way (firewall breaking connectivity, grayscale), so they switch off instantly
+        if (f in INSTANT_OFF) {
+            val off = if (f == Feature.DNS) listOf(Feature.DNS, Feature.ADULT) else listOf(f)  // 18+ rides on the firewall
+            off.forEach { g.prefs.setFeatureNow(it, false); cancel(PendingKinds.FEATURE_OFF, it.key) }
+            return EditResult.Applied
+        }
         return schedule(PendingKinds.FEATURE_OFF, f.key)
     }
 
@@ -132,3 +140,5 @@ class Policy(private val g: Graph) {
         }
     }
 }
+
+private val INSTANT_OFF = listOf(Feature.DNS, Feature.ADULT, Feature.GRAYSCALE, Feature.GATE)

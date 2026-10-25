@@ -17,6 +17,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
+private fun reelCountFor(raw: String?, today: String): Int =
+    raw?.takeIf { it.startsWith("$today:") }?.substringAfter(':')?.toIntOrNull() ?: 0
+
 private val Context.store by preferencesDataStore("ascend_prefs")
 
 /** Protective features. Turning ON is instant; turning OFF waits 24 h. */
@@ -62,6 +65,12 @@ data class Settings(
     val claimed: Set<String> = emptySet(),
     /** Share cards hide app names. */
     val sharePrivate: Boolean = false,
+    /** "system" | "light" | "dark" */
+    val themeMode: String = "system",
+    /** Reels/Shorts allowed per day before blocking kicks in; 0 = block all. */
+    val reelLimit: Int = 0,
+    /** Reels watched today, counted as "yyyy-MM-dd:n" so it resets at midnight. */
+    val reelsToday: Int = 0,
 ) {
     fun on(f: Feature) = features[f] == true
 }
@@ -98,6 +107,9 @@ class Prefs(private val ctx: Context, scope: CoroutineScope) {
         val stepAccum = longPreferencesKey("step_accum")
         val stepLast = longPreferencesKey("step_last")
         val sharePrivate = booleanPreferencesKey("share_private")
+        val theme = stringPreferencesKey("theme")
+        val reelLimit = intPreferencesKey("reel_limit")
+        val reelCount = stringPreferencesKey("reel_count")
         // tamper-safe clock + heartbeat
         val anchorWall = longPreferencesKey("anchor_wall")
         val anchorElapsed = longPreferencesKey("anchor_elapsed")
@@ -134,6 +146,9 @@ class Prefs(private val ctx: Context, scope: CoroutineScope) {
             chestDay = p[K.chestDay] ?: "",
             claimed = p[K.claimed] ?: emptySet(),
             sharePrivate = p[K.sharePrivate] ?: false,
+            themeMode = p[K.theme] ?: "system",
+            reelLimit = p[K.reelLimit] ?: 0,
+            reelsToday = reelCountFor(p[K.reelCount], java.time.LocalDate.now().toString()),
         )
     }.stateIn(scope, SharingStarted.Eagerly, Settings())
 
@@ -179,6 +194,16 @@ class Prefs(private val ctx: Context, scope: CoroutineScope) {
         val stepAccum get() = K.stepAccum
         val stepLast get() = K.stepLast
         val sharePrivate get() = K.sharePrivate
+        val theme get() = K.theme
+        val reelLimit get() = K.reelLimit
+    }
+
+    /** Counts one more reel today; returns today's new total. */
+    suspend fun countReel(): Int {
+        val today = java.time.LocalDate.now().toString()
+        var n = 0
+        ctx.store.edit { n = reelCountFor(it[K.reelCount], today) + 1; it[K.reelCount] = "$today:$n" }
+        return n
     }
 
     // ---- raw access for TrustedClock / heartbeat (kept out of Settings to avoid churn) ----
